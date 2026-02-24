@@ -4,6 +4,8 @@ FROM registry.access.redhat.com/ubi9/go-toolset:1.25 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
+# Run as root to ensure write permissions in workspace
+USER 0
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
