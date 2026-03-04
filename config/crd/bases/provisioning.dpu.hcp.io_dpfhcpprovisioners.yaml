@@ -101,6 +101,25 @@ spec:
                 x-kubernetes-validations:
                 - message: dpuClusterRef is immutable
                   rule: self == oldSelf
+              dpuDeploymentRef:
+                description: |-
+                  DPUDeploymentRef is a cross-namespace reference to a DPUDeployment CR for ignition generation
+                  This field is required for ignition generation to retrieve DPU flavor information
+                  This field is immutable.
+                properties:
+                  name:
+                    description: Name is the name of the DPUDeployment CR
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the DPUDeployment CR
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+                x-kubernetes-validations:
+                - message: dpuDeploymentRef is immutable
+                  rule: self == oldSelf
               etcdStorageClass:
                 description: |-
                   EtcdStorageClass is the storage class name for etcd persistent volumes in the hosted cluster control plane
@@ -121,6 +140,17 @@ spec:
                 x-kubernetes-validations:
                 - message: flannelEnabled is immutable
                   rule: self == oldSelf
+              machineOSURL:
+                description: |-
+                  MachineOSURL is the URL for the DPU machine OS image to be used in the ignition configuration
+                  This URL replaces the default OS image URL in the HyperShift-generated ignition
+                  Can be set or changed after creation to trigger ignition re-generation
+                type: string
+              mtu9000Enabled:
+                description: |-
+                  MTU9000Enabled indicates whether MTU 9000 based configurations should be generated in the ignition for the DPUs
+                  Can be set or changed after creation to trigger ignition re-generation
+                type: boolean
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -313,6 +343,11 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              ignitionGenerationRetryCount:
+                description: |-
+                  IgnitionGenerationRetryCount tracks the number of ignition generation retries
+                  Used for exponential backoff and max retry enforcement
+                type: integer
               kubeConfigSecretRef:
                 description: KubeConfigSecretRef is a reference to the created kubeconfig
                   Secret in the DPUCluster's namespace
@@ -328,11 +363,18 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              lastProcessedGeneration:
+                description: |-
+                  LastProcessedGeneration is the generation number that was last successfully processed for ignition
+                  Used to detect when spec changes require regenerating ignition
+                format: int64
+                type: integer
               phase:
                 description: Phase represents the current lifecycle phase
                 enum:
                 - Pending
                 - Provisioning
+                - IgnitionGenerating
                 - Ready
                 - Failed
                 - Deleting
