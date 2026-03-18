@@ -1,0 +1,28 @@
+[Unit]
+Description=DPF DPU Agent - Provisioning and Configuration
+After=sys-subsystem-net-devices-tmfifo_net0.device
+Wants=sys-subsystem-net-devices-tmfifo_net0.device
+ConditionPathExists=/etc/mlnx-release
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/dpf/identity
+ExecStart=/usr/local/bin/dpu-agent \
+  --dpu-name $DPUName \
+  --dpu-namespace $DPUNamespace \
+  --dpu-uid $DPUUID \
+  --dpuflavor /etc/dpf/dpuflavor.yaml \
+  --skip-containerd-config \
+  --skip-dns-config \
+  --skip-kernel-cmd-line \
+  --skip-network-config \
+  --skip-remove-builtin-kubelet \
+  --skip-configure-kubelet \
+  --skip-start-kubelet \
+  --skip-ovs-raw-script \
+  --kubeadm-secret-name=unused
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

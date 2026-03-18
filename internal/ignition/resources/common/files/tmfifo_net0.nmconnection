@@ -1,5 +1,5 @@
 [connection]
-id=tmfifo_net0
+id=agent-net
 type=ethernet
 interface-name=tmfifo_net0
 autoconnect=true
@@ -7,9 +7,9 @@ autoconnect=true
 [ethernet]
 
 [ipv4]
-method=manual
-address1=192.168.100.2/24
-never-default=true
+method=disabled
 
 [ipv6]
-method=ignore
+method=manual
+address1=fe80::2/64
+never-default=true

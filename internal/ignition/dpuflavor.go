@@ -18,25 +18,43 @@ package ignition
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_4/types"
 	dpuprovisioningv1alpha1 "github.com/nvidia/doca-platform/api/provisioning/v1alpha1"
+	"sigs.k8s.io/yaml"
 )
 
-// AddFlavorOVSScript adds the DPU Flavor OVS script to the ignition config
-func AddFlavorOVSScript(ign *igntypes.Config, flavorSpec *dpuprovisioningv1alpha1.DPUFlavorSpec) {
-	ovsScript := flavorSpec.OVS.RawConfigScript
-	encoded := base64.StdEncoding.EncodeToString([]byte(ovsScript))
+// AddDPUFlavorYAML serializes the DPU Flavor CR as YAML and adds it as /etc/dpf/dpuflavor.yaml
+func AddDPUFlavorYAML(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUFlavor) error {
+	data, err := yaml.Marshal(flavor)
+	if err != nil {
+		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
+	}
+	return addDPUFlavorFile(ign, data, "/etc/dpf/dpuflavor.yaml")
+}
+
+// AddDPUFlavorJSON serializes the DPU Flavor CR as JSON and adds it as /etc/dpf/dpuflavor.json
+func AddDPUFlavorJSON(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUFlavor) error {
+	data, err := json.Marshal(flavor)
+	if err != nil {
+		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
+	}
+	return addDPUFlavorFile(ign, data, "/etc/dpf/dpuflavor.json")
+}
+
+func addDPUFlavorFile(ign *igntypes.Config, data []byte, path string) error {
+	encoded := base64.StdEncoding.EncodeToString(data)
 	source := fmt.Sprintf("data:text/plain;charset=utf-8;base64,%s", encoded)
 
 	file := igntypes.File{
 		Node: igntypes.Node{
-			Path:      "/usr/local/bin/dpf-ovs-script.sh",
+			Path:      path,
 			Overwrite: Ptr(true),
 		},
 		FileEmbedded1: igntypes.FileEmbedded1{
-			Mode: Ptr(0755),
+			Mode: Ptr(0644),
 			Contents: igntypes.Resource{
 				Source: &source,
 			},
@@ -44,4 +62,5 @@ func AddFlavorOVSScript(ign *igntypes.Config, flavorSpec *dpuprovisioningv1alpha
 	}
 
 	ign.Storage.Files = append(ign.Storage.Files, file)
+	return nil
 }

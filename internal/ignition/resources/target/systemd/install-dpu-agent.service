@@ -1,0 +1,14 @@
+[Unit]
+Description=Install DPU agent
+After=sys-subsystem-net-devices-tmfifo_net0.device
+Wants=sys-subsystem-net-devices-tmfifo_net0.device
+Before=machine-config-daemon-firstboot.service
+ConditionPathExists=!/etc/mlnx-release
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/install-dpu-agent.sh
+
+[Install]
+WantedBy=multi-user.target

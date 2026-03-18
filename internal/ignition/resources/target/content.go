@@ -18,6 +18,21 @@ func NewProvider() *content.EmbeddedProvider {
 	return &content.EmbeddedProvider{
 		Files: []content.FileDefinition{
 			{
+				Path:          "/etc/yum.repos.d/agentrepo.repo",
+				Mode:          0644,
+				ContentSource: f("agentrepo.repo"),
+			},
+			{
+				Path:          "/etc/systemd/system/machine-config-daemon-firstboot.service.d/10-require-dpu-agent.conf",
+				Mode:          0644,
+				ContentSource: f("10-require-dpu-agent.conf"),
+			},
+			{
+				Path:          "/usr/local/bin/install-dpu-agent.sh",
+				Mode:          0755,
+				ContentSource: f("install-dpu-agent.sh"),
+			},
+			{
 				Path:          "/usr/local/bin/devlink-activate.sh",
 				Mode:          0755,
 				ContentSource: f("devlink-activate.sh"),
@@ -65,16 +80,6 @@ func NewProvider() *content.EmbeddedProvider {
 				Path:          "/etc/sysconfig/openvswitch",
 				Mode:          0600,
 				ContentSource: f("openvswitch"),
-			},
-			{
-				Path:          "/usr/local/bin/dpf-configure-sfs.sh",
-				Mode:          0755,
-				ContentSource: f("dpf-configure-sfs.sh"),
-			},
-			{
-				Path:          "/usr/local/bin/set-nvconfig-params.sh",
-				Mode:          0755,
-				ContentSource: f("set-nvconfig-params.sh"),
 			},
 		},
 		SystemdFS: &systemdFS,

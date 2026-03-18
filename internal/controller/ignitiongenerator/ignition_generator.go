@@ -196,7 +196,7 @@ func (ig *IgnitionGenerator) generateIgnition(ctx context.Context, cr *provision
 
 	// Step 4: Build live ignition (embed target)
 	log.V(1).Info("Building live ignition")
-	liveIgnition, err := ig.buildLiveIgnition(targetIgnition, hcpIgnitionBytes)
+	liveIgnition, err := ig.buildLiveIgnition(targetIgnition, hcpIgnitionBytes, dpuFlavor)
 	if err != nil {
 		return fmt.Errorf("failed to build live ignition: %w", err)
 	}
@@ -401,15 +401,13 @@ func (ig *IgnitionGenerator) buildTargetIgnition(hcpIgnitionBytes []byte, dpuFla
 		return nil, fmt.Errorf("failed to add common content: %w", err)
 	}
 
-	// Convert DPUFlavor to ignition.Flavor format
-	ignFlavor := &ignition.Flavor{
-		OVS: ignition.OVS{
-			RawConfigScript: dpuFlavor.Spec.OVS.RawConfigScript,
-		},
-	}
-
 	// Add flavor OVS script
-	ignition.AddFlavorOVSScript(targetIgnition, ignFlavor)
+	ignition.AddFlavorOVSScript(targetIgnition, &dpuFlavor.Spec)
+
+	// Add DPU flavor YAML
+	if err := ignition.AddDPUFlavorYAML(targetIgnition, dpuFlavor); err != nil {
+		return nil, fmt.Errorf("failed to add DPU flavor YAML: %w", err)
+	}
 
 	if mtu != 1500 {
 		ignition.EnableMTU(targetIgnition, mtu)
@@ -419,7 +417,7 @@ func (ig *IgnitionGenerator) buildTargetIgnition(hcpIgnitionBytes []byte, dpuFla
 }
 
 // buildLiveIgnition builds the live ignition with embedded target ignition
-func (ig *IgnitionGenerator) buildLiveIgnition(targetIgnition *igntypes.Config, hcpIgnitionBytes []byte) (*igntypes.Config, error) {
+func (ig *IgnitionGenerator) buildLiveIgnition(targetIgnition *igntypes.Config, hcpIgnitionBytes []byte, dpuFlavor *dpuprovisioningv1alpha1.DPUFlavor) (*igntypes.Config, error) {
 	// Parse HCP to extract passwd
 	hcpIgnition := &igntypes.Config{}
 	if err := json.Unmarshal(hcpIgnitionBytes, hcpIgnition); err != nil {
@@ -444,6 +442,11 @@ func (ig *IgnitionGenerator) buildLiveIgnition(targetIgnition *igntypes.Config, 
 	commonProvider := common.NewProvider()
 	if err := igncontent.AddContent(liveIgnition, commonProvider); err != nil {
 		return nil, fmt.Errorf("failed to add common content: %w", err)
+	}
+
+	// Add DPU flavor JSON
+	if err := ignition.AddDPUFlavorJSON(liveIgnition, dpuFlavor); err != nil {
+		return nil, fmt.Errorf("failed to add DPU flavor JSON: %w", err)
 	}
 
 	// Encode target ignition (gzip + base64)

@@ -560,8 +560,12 @@ var _ = Describe("buildLiveIgnition", func() {
 	It("should produce live ignition with embedded target at /var/target.ign", func() {
 		targetIgnition := ignition.NewEmptyIgnition("3.4.0")
 		hcpJSON, _ := json.Marshal(ignition.NewEmptyIgnition("3.4.0"))
-
-		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash\necho ovs"},
+			},
+		}
+		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON, flavor)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Ignition.Version).To(Equal(testIgnitionVersion))
 
@@ -587,7 +591,12 @@ var _ = Describe("buildLiveIgnition", func() {
 		}
 		hcpJSON, _ := json.Marshal(hcpIgnition)
 
-		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash\necho ovs"},
+			},
+		}
+		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON, flavor)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Passwd.Users).To(HaveLen(1))
 		Expect(result.Passwd.Users[0].Name).To(Equal("core"))
@@ -596,15 +605,21 @@ var _ = Describe("buildLiveIgnition", func() {
 	It("should work when HCP ignition has no passwd", func() {
 		targetIgnition := ignition.NewEmptyIgnition("3.4.0")
 		hcpJSON, _ := json.Marshal(ignition.NewEmptyIgnition("3.4.0"))
-
-		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash\necho ovs"},
+			},
+		}
+		result, err := ig.buildLiveIgnition(targetIgnition, hcpJSON, flavor)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Passwd.Users).To(BeEmpty())
 	})
 
 	It("should return error for invalid HCP JSON", func() {
 		targetIgnition := ignition.NewEmptyIgnition("3.4.0")
-		_, err := ig.buildLiveIgnition(targetIgnition, []byte("invalid"))
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{}
+
+		_, err := ig.buildLiveIgnition(targetIgnition, []byte("invalid"), flavor)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("failed to parse HCP ignition for passwd"))
 	})

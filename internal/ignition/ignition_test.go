@@ -27,6 +27,7 @@ import (
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_4/types"
+	dpuprovisioningv1alpha1 "github.com/nvidia/doca-platform/api/provisioning/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -228,11 +229,11 @@ var _ = Describe("ReplaceMachineOSURL", func() {
 var _ = Describe("AddFlavorOVSScript", func() {
 	It("should add the OVS script file to ignition", func() {
 		ign := NewEmptyIgnition("3.4.0")
-		flavor := &Flavor{
-			OVS: OVS{RawConfigScript: "#!/bin/bash\novs-vsctl add-br br0"},
+		flavorSpec := &dpuprovisioningv1alpha1.DPUFlavorSpec{
+			OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash\novs-vsctl add-br br0"},
 		}
 
-		AddFlavorOVSScript(ign, flavor)
+		AddFlavorOVSScript(ign, flavorSpec)
 
 		Expect(ign.Storage.Files).To(HaveLen(1))
 		file := ign.Storage.Files[0]
@@ -244,9 +245,9 @@ var _ = Describe("AddFlavorOVSScript", func() {
 	It("should base64-encode the script content", func() {
 		ign := NewEmptyIgnition("3.4.0")
 		script := "#!/bin/bash\necho test"
-		flavor := &Flavor{OVS: OVS{RawConfigScript: script}}
+		flavorSpec := &dpuprovisioningv1alpha1.DPUFlavorSpec{OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: script}}
 
-		AddFlavorOVSScript(ign, flavor)
+		AddFlavorOVSScript(ign, flavorSpec)
 
 		source := *ign.Storage.Files[0].Contents.Source
 		Expect(source).To(HavePrefix("data:text/plain;charset=utf-8;base64,"))
@@ -258,9 +259,9 @@ var _ = Describe("AddFlavorOVSScript", func() {
 
 	It("should handle an empty script", func() {
 		ign := NewEmptyIgnition("3.4.0")
-		flavor := &Flavor{OVS: OVS{RawConfigScript: ""}}
+		flavorSpec := &dpuprovisioningv1alpha1.DPUFlavorSpec{OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: ""}}
 
-		AddFlavorOVSScript(ign, flavor)
+		AddFlavorOVSScript(ign, flavorSpec)
 		Expect(ign.Storage.Files).To(HaveLen(1))
 	})
 })
