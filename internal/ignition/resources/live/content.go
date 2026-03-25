@@ -37,8 +37,6 @@ func NewProvider() *content.EmbeddedProvider {
 					"DPUName={{.DPUName}}" + nl +
 					"DPUNamespace={{.DPUNamespace}}" + nl +
 					"DPUUID={{.DPUUID}}" + nl,
-				// "DPUAgentRepoURL={{.DPUAgentRepoURL}}" + nl + // Currently breaks due to ipv6 format
-				// "BFGCFGParams={{.BFGCFGParams}}" + nl +// Currently breaks due to BFGCFGParams being an array that resolves to a string with spaces
 			},
 			{
 				Path:          "/usr/local/bin/dpuagent-client.py",

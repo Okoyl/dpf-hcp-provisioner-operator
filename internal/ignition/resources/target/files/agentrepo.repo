@@ -2,5 +2,5 @@
 name=RPM Repository for DPU Agent
 enabled=1
 gpgcheck=0
-baseurl=http://[fe80::1%tmfifo_net0]:11029/rpm/
+baseurl=http://[fe80::1%25tmfifo_net0]:11029/rpm/
 
