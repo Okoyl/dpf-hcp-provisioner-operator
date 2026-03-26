@@ -23,12 +23,25 @@ import (
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_4/types"
 	dpuprovisioningv1alpha1 "github.com/nvidia/doca-platform/api/provisioning/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
+// cleanDPUFlavor returns a copy with only apiVersion, kind, name, namespace, and spec.
+func cleanDPUFlavor(flavor *dpuprovisioningv1alpha1.DPUFlavor) *dpuprovisioningv1alpha1.DPUFlavor {
+	return &dpuprovisioningv1alpha1.DPUFlavor{
+		TypeMeta: flavor.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      flavor.Name,
+			Namespace: flavor.Namespace,
+		},
+		Spec: flavor.Spec,
+	}
+}
+
 // AddDPUFlavorYAML serializes the DPU Flavor CR as YAML and adds it as /etc/dpf/dpuflavor.yaml
 func AddDPUFlavorYAML(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUFlavor) error {
-	data, err := yaml.Marshal(flavor)
+	data, err := yaml.Marshal(cleanDPUFlavor(flavor))
 	if err != nil {
 		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
 	}
@@ -37,7 +50,7 @@ func AddDPUFlavorYAML(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUF
 
 // AddDPUFlavorJSON serializes the DPU Flavor CR as JSON and adds it as /etc/dpf/dpuflavor.json
 func AddDPUFlavorJSON(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUFlavor) error {
-	data, err := json.Marshal(flavor)
+	data, err := json.Marshal(cleanDPUFlavor(flavor))
 	if err != nil {
 		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
 	}
