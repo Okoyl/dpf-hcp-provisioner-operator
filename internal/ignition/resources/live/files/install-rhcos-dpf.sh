@@ -72,7 +72,16 @@ wait_for_host_agent() {
 }
 
 dpu_agent() {
+    local TIMEOUT=300 # 5 minutes
+    local START=$(date +%s)
+
     until /usr/local/bin/dpuagent-client.py "$1"; do
+        local ELAPSED=$(($(date +%s) - START))
+        if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+            log "ERROR: Timed out contacting dpu-agent on call $1"
+            exit 1
+        fi
+
         log "WARN: dpuagent-client $1 failed, retrying in 5s..."
         sleep 5
     done
@@ -124,8 +133,6 @@ install_rhcos() {
         log "ERROR: Failed to install Red Hat CoreOS."
         exit 1
     fi
-
-    sync
 }
 
 wait_for_host_reboot_if_required() {

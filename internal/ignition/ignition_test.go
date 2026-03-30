@@ -30,6 +30,8 @@ import (
 	dpuprovisioningv1alpha1 "github.com/nvidia/doca-platform/api/provisioning/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const compressionGzip = "gzip"
@@ -406,5 +408,138 @@ var _ = Describe("GzipIgnitionFiles", func() {
 		_, err = buf.ReadFrom(gzReader)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(buf.String()).To(Equal(originalContent))
+	})
+})
+
+var _ = Describe("cleanDPUFlavor", func() {
+	It("should keep only TypeMeta, name, namespace, and spec", func() {
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "provisioning.dpu.nvidia.com/v1alpha1",
+				Kind:       "DPUFlavor",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-flavor",
+				Namespace:       "test-ns",
+				UID:             "some-uid",
+				ResourceVersion: "12345",
+				Labels:          map[string]string{"key": "value"},
+				Annotations:     map[string]string{"ann": "val"},
+			},
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash"},
+			},
+		}
+
+		cleaned := cleanDPUFlavor(flavor)
+
+		Expect(cleaned.TypeMeta).To(Equal(flavor.TypeMeta))
+		Expect(cleaned.Name).To(Equal("test-flavor"))
+		Expect(cleaned.Namespace).To(Equal("test-ns"))
+		Expect(cleaned.Spec).To(Equal(flavor.Spec))
+		Expect(cleaned.UID).To(BeEmpty())
+		Expect(cleaned.ResourceVersion).To(BeEmpty())
+		Expect(cleaned.Labels).To(BeNil())
+		Expect(cleaned.Annotations).To(BeNil())
+	})
+})
+
+var _ = Describe("AddDPUFlavorYAML", func() {
+	It("should add a YAML file at the correct path", func() {
+		ign := NewEmptyIgnition(testIgnitionVersion)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-flavor", Namespace: "ns"},
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash"},
+			},
+		}
+
+		err := AddDPUFlavorYAML(ign, flavor)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ign.Storage.Files).To(HaveLen(1))
+		Expect(ign.Storage.Files[0].Path).To(Equal(dpuFlavorYAMLPath))
+		Expect(*ign.Storage.Files[0].Mode).To(Equal(0644))
+		Expect(*ign.Storage.Files[0].Overwrite).To(BeTrue())
+	})
+
+	It("should produce valid YAML content with only cleaned fields", func() {
+		ign := NewEmptyIgnition(testIgnitionVersion)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "my-flavor",
+				Namespace:       "ns",
+				ResourceVersion: "999",
+			},
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash"},
+			},
+		}
+
+		err := AddDPUFlavorYAML(ign, flavor)
+		Expect(err).NotTo(HaveOccurred())
+
+		source := *ign.Storage.Files[0].Contents.Source
+		b64 := strings.TrimPrefix(source, "data:text/plain;charset=utf-8;base64,")
+		decoded, err := base64.StdEncoding.DecodeString(b64)
+		Expect(err).NotTo(HaveOccurred())
+
+		var result map[string]interface{}
+		err = yaml.Unmarshal(decoded, &result)
+		Expect(err).NotTo(HaveOccurred())
+
+		metadata := result["metadata"].(map[string]interface{})
+		Expect(metadata["name"]).To(Equal("my-flavor"))
+		Expect(metadata["namespace"]).To(Equal("ns"))
+		Expect(metadata).NotTo(HaveKey("resourceVersion"))
+	})
+})
+
+var _ = Describe("AddDPUFlavorJSON", func() {
+	It("should add a JSON file at the correct path", func() {
+		ign := NewEmptyIgnition(testIgnitionVersion)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-flavor", Namespace: "ns"},
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash"},
+			},
+		}
+
+		err := AddDPUFlavorJSON(ign, flavor)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ign.Storage.Files).To(HaveLen(1))
+		Expect(ign.Storage.Files[0].Path).To(Equal(dpuFlavorJSONPath))
+		Expect(*ign.Storage.Files[0].Mode).To(Equal(0644))
+		Expect(*ign.Storage.Files[0].Overwrite).To(BeTrue())
+	})
+
+	It("should produce valid JSON content with only cleaned fields", func() {
+		ign := NewEmptyIgnition(testIgnitionVersion)
+		flavor := &dpuprovisioningv1alpha1.DPUFlavor{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "my-flavor",
+				Namespace:       "ns",
+				ResourceVersion: "999",
+			},
+			Spec: dpuprovisioningv1alpha1.DPUFlavorSpec{
+				OVS: dpuprovisioningv1alpha1.DPUFlavorOVS{RawConfigScript: "#!/bin/bash"},
+			},
+		}
+
+		err := AddDPUFlavorJSON(ign, flavor)
+		Expect(err).NotTo(HaveOccurred())
+
+		source := *ign.Storage.Files[0].Contents.Source
+		b64 := strings.TrimPrefix(source, "data:text/plain;charset=utf-8;base64,")
+		decoded, err := base64.StdEncoding.DecodeString(b64)
+		Expect(err).NotTo(HaveOccurred())
+
+		var result map[string]interface{}
+		err = json.Unmarshal(decoded, &result)
+		Expect(err).NotTo(HaveOccurred())
+
+		metadata := result["metadata"].(map[string]interface{})
+		Expect(metadata["name"]).To(Equal("my-flavor"))
+		Expect(metadata["namespace"]).To(Equal("ns"))
+		Expect(metadata).NotTo(HaveKey("resourceVersion"))
 	})
 })

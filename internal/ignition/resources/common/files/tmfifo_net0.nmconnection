@@ -1,5 +1,5 @@
 [connection]
-id=agent-net
+id=tmfifo_net0
 type=ethernet
 interface-name=tmfifo_net0
 autoconnect=true

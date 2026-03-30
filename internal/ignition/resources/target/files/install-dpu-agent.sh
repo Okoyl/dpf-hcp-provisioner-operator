@@ -4,7 +4,7 @@ exec > >(tee >(while read -r line; do /usr/local/bin/bflog.sh "$line"; done)) 2>
 
 echo "Installing dpu-agent..."
 
-TIMEOUT=1800 # 30 minutes
+TIMEOUT=900 # 15 minutes
 START=$(date +%s)
 
 while true; do

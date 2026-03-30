@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
@@ -26,14 +27,22 @@ def base_request(method, path, payload):
         headers={"Content-Type": "application/json"},
         method=method,
     )
-    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
-        return resp.read()
+    try:
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+            body = resp.read().decode()
+            print(f"[{resp.status}] {body}")
+            return body
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        print(f"[{e.code}] {body}", file=sys.stderr)
+        sys.exit(1)
 
 
 def configure_host_vfs():
     return base_request("POST", "/configure-host-vfs", {
         "dpuName": DPU_NAME,
         "dpuNamespace": DPU_NAMESPACE,
+        "dpuUID": DPU_UID,
     })
 
 
@@ -52,6 +61,7 @@ def update_time():
     return base_request("POST", "/update-status", {
         "dpuName": DPU_NAME,
         "dpuNamespace": DPU_NAMESPACE,
+        "dpuUID": DPU_UID,
         "agentStatus": {
             "lastStartupTime": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         },
@@ -68,6 +78,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
         print(f"Usage: {sys.argv[0]} <{'|'.join(COMMANDS)}>")
         sys.exit(1)
-    result = COMMANDS[sys.argv[1]]()
-    if result:
-        print(result.decode())
+    COMMANDS[sys.argv[1]]()

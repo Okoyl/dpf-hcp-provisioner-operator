@@ -157,6 +157,9 @@ func (ig *IgnitionGenerator) generateIgnition(ctx context.Context, cr *provision
 	if err != nil {
 		return fmt.Errorf("failed to retrieve DPU Flavor: %w", err)
 	}
+	if dpuFlavor == nil {
+		return fmt.Errorf("retrieved DPU Flavor is nil")
+	}
 
 	// Step 3: Build target ignition (HCP + DPF modifications)
 	log.V(1).Info("Building target ignition")
