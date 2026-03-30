@@ -21,11 +21,12 @@ import (
 	"fmt"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_4/types"
+	dpuprovisioningv1alpha1 "github.com/nvidia/doca-platform/api/provisioning/v1alpha1"
 )
 
 // AddFlavorOVSScript adds the DPU Flavor OVS script to the ignition config
-func AddFlavorOVSScript(ign *igntypes.Config, flavor *Flavor) {
-	ovsScript := flavor.OVS.RawConfigScript
+func AddFlavorOVSScript(ign *igntypes.Config, flavorSpec *dpuprovisioningv1alpha1.DPUFlavorSpec) {
+	ovsScript := flavorSpec.OVS.RawConfigScript
 	encoded := base64.StdEncoding.EncodeToString([]byte(ovsScript))
 	source := fmt.Sprintf("data:text/plain;charset=utf-8;base64,%s", encoded)
 

@@ -12,6 +12,8 @@ var filesFS embed.FS
 //go:embed systemd/*
 var systemdFS embed.FS
 
+const nl = "%0A" // URL-encoded newline for data URIs
+
 func NewProvider() *content.EmbeddedProvider {
 	f := func(name string) []byte { return content.EmbedFile(filesFS, "files/"+name) }
 
@@ -29,9 +31,17 @@ func NewProvider() *content.EmbeddedProvider {
 				ContentSource: "data:,{{.DPUHostName}}",
 			},
 			{
-				Path:          "/usr/local/bin/set-nvconfig-params-mst.sh",
+				Path: "/etc/dpf/identity",
+				Mode: 0644,
+				ContentSource: "data:," +
+					"DPUName={{.DPUName}}" + nl +
+					"DPUNamespace={{.DPUNamespace}}" + nl +
+					"DPUUID={{.DPUUID}}" + nl,
+			},
+			{
+				Path:          "/usr/local/bin/dpuagent-client.py",
 				Mode:          0755,
-				ContentSource: f("set-nvconfig-params-mst.sh"),
+				ContentSource: f("dpuagent-client.py"),
 			},
 			{
 				Path:          "/usr/local/bin/install-rhcos-dpf.sh",

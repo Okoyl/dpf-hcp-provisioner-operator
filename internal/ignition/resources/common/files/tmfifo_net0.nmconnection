@@ -7,9 +7,11 @@ autoconnect=true
 [ethernet]
 
 [ipv4]
-method=manual
-address1=192.168.100.2/24
-never-default=true
+# removed ipv4 dpu address
+method=disabled
 
+# ipv6 networking for dpua-gent to host-agent communication
 [ipv6]
-method=ignore
+method=manual
+address1=fe80::2/64
+never-default=true

@@ -20,32 +20,3 @@ package ignition
 func Ptr[T any](v T) *T {
 	return &v
 }
-
-// Grub represents grub configuration
-type Grub struct {
-	KernelParameters []string `json:"kernelParameters"`
-}
-
-// NVConfig represents NVIDIA configuration
-type NVConfig struct {
-	Device     string   `json:"device"`
-	Parameters []string `json:"parameters"`
-}
-
-// OVS represents Open vSwitch configuration
-type OVS struct {
-	RawConfigScript string `json:"rawConfigScript"`
-}
-
-// Flavor represents a DPU flavor configuration
-type Flavor struct {
-	BFCFGParameters []string   `json:"bfcfgParameters"`
-	Grub            Grub       `json:"grub"`
-	NVConfig        []NVConfig `json:"nvconfig"`
-	OVS             OVS        `json:"ovs"`
-}
-
-// FlavorResponse represents the API response containing a flavor
-type FlavorResponse struct {
-	Spec Flavor `json:"spec"`
-}

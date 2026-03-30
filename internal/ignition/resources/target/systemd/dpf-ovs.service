@@ -1,5 +1,5 @@
 [Unit]
-Description=DPF OVS setup for first boot
+Description=DPF OVS setup
 After=network.target
 ConditionPathExists=/etc/mlnx-release
 
@@ -7,7 +7,6 @@ ConditionPathExists=/etc/mlnx-release
 Type=oneshot
 ExecStart=/usr/local/bin/dpf-ovs-script.sh
 RemainAfterExit=true
-ConditionFirstBoot=true
 
 [Install]
 WantedBy=multi-user.target
