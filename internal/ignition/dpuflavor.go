@@ -27,6 +27,9 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const dpuFlavorJSONPath = "/etc/dpf/dpuflavor.json"
+const dpuFlavorYAMLPath = "/etc/dpf/dpuflavor.yaml"
+
 // cleanDPUFlavor returns a copy with only apiVersion, kind, name, namespace, and spec.
 func cleanDPUFlavor(flavor *dpuprovisioningv1alpha1.DPUFlavor) *dpuprovisioningv1alpha1.DPUFlavor {
 	return &dpuprovisioningv1alpha1.DPUFlavor{
@@ -45,7 +48,7 @@ func AddDPUFlavorYAML(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUF
 	if err != nil {
 		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
 	}
-	return addDPUFlavorFile(ign, data, "/etc/dpf/dpuflavor.yaml")
+	return addDPUFlavorFile(ign, data, dpuFlavorYAMLPath)
 }
 
 // AddDPUFlavorJSON serializes the DPU Flavor CR as JSON and adds it as /etc/dpf/dpuflavor.json
@@ -54,7 +57,7 @@ func AddDPUFlavorJSON(ign *igntypes.Config, flavor *dpuprovisioningv1alpha1.DPUF
 	if err != nil {
 		return fmt.Errorf("failed to marshal DPU flavor: %w", err)
 	}
-	return addDPUFlavorFile(ign, data, "/etc/dpf/dpuflavor.json")
+	return addDPUFlavorFile(ign, data, dpuFlavorJSONPath)
 }
 
 func addDPUFlavorFile(ign *igntypes.Config, data []byte, path string) error {

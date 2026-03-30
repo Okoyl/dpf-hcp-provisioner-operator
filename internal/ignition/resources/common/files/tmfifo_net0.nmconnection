@@ -7,8 +7,10 @@ autoconnect=true
 [ethernet]
 
 [ipv4]
+# removed ipv4 dpu address
 method=disabled
 
+# ipv6 networking for dpua-gent to host-agent communication
 [ipv6]
 method=manual
 address1=fe80::2/64
